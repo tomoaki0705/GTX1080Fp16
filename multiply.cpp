@@ -1,4 +1,6 @@
 #include <iostream>
+#include <vector_types.h>
+#include "types.h"
 
 extern "C" void
 launchCudaProcessHalf(dim3 grid, dim3 block, int sbytes,

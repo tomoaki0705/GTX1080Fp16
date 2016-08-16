@@ -1,5 +1,4 @@
 #include <iostream>
-#include <cuda_runtime.h>
 
 extern "C" void
 launchCudaProcessHalf(dim3 grid, dim3 block, int sbytes,

@@ -79,6 +79,8 @@ int main()
 	launchCudaProcess<short>(1920, 1080, 16, 16, 1000);
 	launchCudaProcess<float>(640,  480,  16, 16, 1000);
 	launchCudaProcess<short>(640,  480,  16, 16, 1000);
+	launchCudaProcess<float>(3840, 2160, 16, 16, 1000);
+	launchCudaProcess<short>(3840, 2160, 16, 16, 1000);
 
 	return 0;
 }

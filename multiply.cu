@@ -1,15 +1,7 @@
 #include <cuda_fp16.h>
 
-extern "C" void
-launchCudaProcessHalf(dim3 grid, dim3 block, int sbytes,
-					short *gain, short *imageInput, short *imageOutput);
-
-extern "C" void
-launchCudaProcessFloat(dim3 grid, dim3 block, int sbytes,
-					float *gain, float *imageInput, float *imageOutput);
-
 __global__ void
-cudaProcessHalf(half *dst, half *gain, half *src, int imgW)
+cudaProcessHalf0(half *dst, half *gain, half *src, int imgW)
 {
 	int tx = threadIdx.x;
 	int ty = threadIdx.y;
@@ -24,3 +16,32 @@ cudaProcessHalf(half *dst, half *gain, half *src, int imgW)
 
 	dst[px] = __hmul(g, i);
 }
+
+__global__ void
+cudaProcessFloat0(float *dst, float *gain, float *src, int imgW)
+{
+	int tx = threadIdx.x;
+	int ty = threadIdx.y;
+	int bw = blockDim.x;
+	int bh = blockDim.y;
+	int x = blockIdx.x*bw + tx;
+	int y = blockIdx.y*bh + ty;
+	int px = y*imgW+x;
+
+	float g = gain[px];
+	float i = src[px];
+
+	dst[px] = g*i;
+}
+
+extern "C" void
+launchCudaProcessHalf0(dim3 grid, dim3 block, int sbytes,
+					short *gain, short *imageInput, short *imageOutput, int imgW);
+
+extern "C" void
+launchCudaProcessFloat0(dim3 grid, dim3 block, int sbytes,
+					float *gain, float *imageInput, float *imageOutput, int imgW)
+{
+	cudaProcessFloat0<<< grid, block, sbytes >>>(imageOutput, gain, imageInput, imgW);
+}
+

@@ -2,36 +2,53 @@
 #include <vector_types.h>
 #include <chrono>
 #include "types.h"
+#include <cuda_runtime.h>
 
 extern "C" void
-launchCudaProcessHalf(dim3 grid, dim3 block, int sbytes,
-					short *gain, short *imageInput, short *imageOutput);
+launchCudaProcessHalf0(dim3 grid, dim3 block, int sbytes,
+					short *gain, short *imageInput, short *imageOutput, int imgW);
 
 extern "C" void
-launchCudaProcessFloat(dim3 grid, dim3 block, int sbytes,
-					float *gain, float *imageInput, float *imageOutput);
+launchCudaProcessFloat0(dim3 grid, dim3 block, int sbytes,
+					float *gain, float *imageInput, float *imageOutput, int imgW);
+
+
+template<typename T, int t> void launchCudaProcess(int imgW, int imgH, int gridX, int gridY);
+
+template<> void
+launchCudaProcess<float, 0>(int imgW, int imgH, int gridX, int gridY)
+{
+	float* imageFloat, *gainFloat, *dstFloat;
+	int s = imgW*imgH;
+
+	cudaMalloc((float**)&imageFloat, (s*sizeof(float)));
+	cudaMalloc((float**)&gainFloat, (s*sizeof(float)));
+	cudaMalloc((float**)&dstFloat, (s*sizeof(float)));
+
+	dim3 block(16, 16, 1);
+	dim3 grid(imgW / block.x, imgH / block.y, 1);
+
+	auto start = std::chrono::system_clock::now();
+	launchCudaProcessFloat0(grid, block, 0, gainFloat, imageFloat, dstFloat, imgW);
+	auto end  = std::chrono::system_clock::now();
+	auto dur = end - start;
+	int msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
+
+	cudaFree((void*)imageFloat);
+	cudaFree((void*)gainFloat);
+	cudaFree((void*)dstFloat);
+}
+
+
+
+
+
+
 
 int main()
 {
-	float* imageFloat = new float[1920*1080];
-	float* gainFloat = new float[1920*1080];
-	float* dstFloat = new float[1920*1080];
-	short* imageHalf = new short[1920*1080];
-	short* gainHalf = new short[1920*1080];
-	short* dstHalf = new short[1920*1080];
 
-	auto start = std::chrono::system_clock::now();
-	auto end  = std::chrono::system_clock::now();
-	auto dur = end - start;
-	auto msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
 
-	std::cout << msec << "[ms] passed" << std::endl;
 
-	delete [] imageFloat;
-	delete [] gainFloat;
-	delete [] dstFloat;
-	delete [] imageHalf;
-	delete [] gainHalf;
-	delete [] dstHalf;
 	return 0;
 }

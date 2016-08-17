@@ -36,7 +36,10 @@ cudaProcessFloat0(float *dst, float *gain, float *src, int imgW)
 
 extern "C" void
 launchCudaProcessHalf0(dim3 grid, dim3 block, int sbytes,
-					short *gain, short *imageInput, short *imageOutput, int imgW);
+					short *gain, short *imageInput, short *imageOutput, int imgW)
+{
+	cudaProcessHalf0<<< grid, block, sbytes >>>((half*)imageOutput, (half*)gain, (half*)imageInput, imgW);
+}
 
 extern "C" void
 launchCudaProcessFloat0(dim3 grid, dim3 block, int sbytes,

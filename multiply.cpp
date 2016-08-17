@@ -13,10 +13,10 @@ launchCudaProcessFloat0(dim3 grid, dim3 block, int sbytes,
 					float *gain, float *imageInput, float *imageOutput, int imgW);
 
 
-template<typename T, int t> void launchCudaProcess(int imgW, int imgH, int gridX, int gridY);
+template<typename T> void launchCudaProcess(int imgW, int imgH, int gridX, int gridY);
 
 template<> void
-launchCudaProcess<float, 0>(int imgW, int imgH, int gridX, int gridY)
+launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY)
 {
 	float* imageFloat, *gainFloat, *dstFloat;
 	int s = imgW*imgH;
@@ -25,7 +25,7 @@ launchCudaProcess<float, 0>(int imgW, int imgH, int gridX, int gridY)
 	cudaMalloc((float**)&gainFloat, (s*sizeof(float)));
 	cudaMalloc((float**)&dstFloat, (s*sizeof(float)));
 
-	dim3 block(16, 16, 1);
+	dim3 block(gridX, gridY, 1);
 	dim3 grid(imgW / block.x, imgH / block.y, 1);
 
 	auto start = std::chrono::system_clock::now();
@@ -40,15 +40,10 @@ launchCudaProcess<float, 0>(int imgW, int imgH, int gridX, int gridY)
 }
 
 
-
-
-
-
-
 int main()
 {
 
-
+	launchCudaProcess<float>(1920, 1080, 16, 16);
 
 	return 0;
 }

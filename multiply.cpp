@@ -3,6 +3,8 @@
 #include <chrono>
 #include "types.h"
 #include <cuda_runtime.h>
+#include <vector>
+#include <algorithm>
 
 extern "C" void
 launchCudaProcessHalf0(dim3 grid, dim3 block,
@@ -12,6 +14,19 @@ extern "C" void
 launchCudaProcessFloat0(dim3 grid, dim3 block,
 					float *gain, float *imageInput, float *imageOutput, int imgW);
 
+extern "C" void
+launchCudaProcessHalf1(dim3 grid, dim3 block,
+					short *gain, short *imageInput, short *imageOutput, int imgW);
+
+extern "C" void
+launchCudaProcessFloat1(dim3 grid, dim3 block,
+					float *gain, float *imageInput, float *imageOutput, int imgW);
+
+int getMedian(std::vector<int>& timeDuration)
+{
+	std::sort(timeDuration.begin(), timeDuration.end());
+	return timeDuration[timeDuration.size()/2];
+}
 
 template<typename T> void launchCudaProcess(int imgW, int imgH, int gridX, int gridY, int cLoop, enum processType t = elementWise);
 
@@ -39,15 +54,17 @@ launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY, int cLoop, en
 			break;
 	}
 
-	auto start = std::chrono::system_clock::now();
+	std::vector<int> timeDuration;
 	for(int i = 0;i < cLoop;i++)
 	{
+		auto start = std::chrono::system_clock::now();
 		launchCudaProcessFloat0(grid, block, gainImage, srcImage, dstImage, imgW);
+		auto end  = std::chrono::system_clock::now();
+		auto dur = end - start;
+		int usec = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
+		timeDuration.push_back(usec);
 	}
-	auto end  = std::chrono::system_clock::now();
-	auto dur = end - start;
-	int msec = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
-	std::cout << msec << " [us] consumed" << std::endl;
+	std::cout << getMedian(timeDuration) << " [us] consumed" << std::endl;
 
 	cudaFree((void*)srcImage);
 	cudaFree((void*)gainImage);
@@ -79,15 +96,33 @@ launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY, int cLoop, en
 	}
 
 
-	auto start = std::chrono::system_clock::now();
-	for(int i = 0;i < cLoop;i++)
+	std::vector<int> timeDuration;
+	switch(t)
 	{
-		launchCudaProcessHalf0(grid, block, gainImage, srcImage, dstImage, imgW);
+		case pack2:
+			for(int i = 0;i < cLoop;i++)
+			{
+				auto start = std::chrono::system_clock::now();
+				launchCudaProcessHalf1(grid, block, gainImage, srcImage, dstImage, imgW);
+				auto end  = std::chrono::system_clock::now();
+				auto dur = end - start;
+				int usec = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
+				timeDuration.push_back(usec);
+			}
+			break;
+		default:
+			for(int i = 0;i < cLoop;i++)
+			{
+				auto start = std::chrono::system_clock::now();
+				launchCudaProcessHalf0(grid, block, gainImage, srcImage, dstImage, imgW);
+				auto end  = std::chrono::system_clock::now();
+				auto dur = end - start;
+				int usec = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
+				timeDuration.push_back(usec);
+			}
+			break;
 	}
-	auto end  = std::chrono::system_clock::now();
-	auto dur = end - start;
-	int msec = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
-	std::cout << msec << " [us] consumed" << std::endl;
+	std::cout << getMedian(timeDuration) << " [us] consumed" << std::endl;
 
 	cudaFree((void*)srcImage);
 	cudaFree((void*)gainImage);
@@ -100,10 +135,13 @@ int main()
 
 	launchCudaProcess<float>(1920, 1080, 16, 16, 1000);
 	launchCudaProcess<short>(1920, 1080, 16, 16, 1000);
+	launchCudaProcess<short>(1920, 1080, 16, 16, 1000, pack2);
 	launchCudaProcess<float>(640,  480,  16, 16, 1000);
 	launchCudaProcess<short>(640,  480,  16, 16, 1000);
+	launchCudaProcess<short>(640,  480,  16, 16, 1000, pack2);
 	launchCudaProcess<float>(3840, 2160, 16, 16, 1000);
 	launchCudaProcess<short>(3840, 2160, 16, 16, 1000);
+	launchCudaProcess<short>(3840, 2160, 16, 16, 1000, pack2);
 
 	return 0;
 }

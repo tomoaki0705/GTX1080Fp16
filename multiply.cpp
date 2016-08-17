@@ -32,8 +32,8 @@ launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY)
 	launchCudaProcessFloat0(grid, block, 0, gainFloat, imageFloat, dstFloat, imgW);
 	auto end  = std::chrono::system_clock::now();
 	auto dur = end - start;
-	int msec = std::chrono::duration_cast<std::chrono::milliseconds>(dur).count();
-	std::cout << msec << " [ms] consumed" << std::endl;
+	int msec = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
+	std::cout << msec << " [us] consumed" << std::endl;
 
 	cudaFree((void*)imageFloat);
 	cudaFree((void*)gainFloat);

@@ -15,4 +15,5 @@ else(CUDA_FOUND)
     message("Could not find CUDA in this system!")
 endif(CUDA_FOUND)
 
+set(CMAKE_CXX_STANDARD 11)
 cuda_add_executable(fp16Mul multiply.cpp ${CUDA_SOURCES})

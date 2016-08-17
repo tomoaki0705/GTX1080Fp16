@@ -13,10 +13,10 @@ launchCudaProcessFloat0(dim3 grid, dim3 block,
 					float *gain, float *imageInput, float *imageOutput, int imgW);
 
 
-template<typename T> void launchCudaProcess(int imgW, int imgH, int gridX, int gridY);
+template<typename T> void launchCudaProcess(int imgW, int imgH, int gridX, int gridY, int cLoop);
 
 template<> void
-launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY)
+launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY, int cLoop)
 {
 	float* srcImage, *gainImage, *dstImage;
 	int s = imgW*imgH;
@@ -29,7 +29,10 @@ launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY)
 	dim3 grid(imgW / block.x, imgH / block.y, 1);
 
 	auto start = std::chrono::system_clock::now();
-	launchCudaProcessFloat0(grid, block, gainImage, srcImage, dstImage, imgW);
+	for(int i = 0;i < cLoop;i++)
+	{
+		launchCudaProcessFloat0(grid, block, gainImage, srcImage, dstImage, imgW);
+	}
 	auto end  = std::chrono::system_clock::now();
 	auto dur = end - start;
 	int msec = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
@@ -41,7 +44,7 @@ launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY)
 }
 
 template<> void
-launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY)
+launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY, int cLoop)
 {
 	short* srcImage, *gainImage, *dstImage;
 	int s = imgW*imgH;
@@ -54,7 +57,10 @@ launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY)
 	dim3 grid(imgW / block.x, imgH / block.y, 1);
 
 	auto start = std::chrono::system_clock::now();
-	launchCudaProcessHalf0(grid, block, gainImage, srcImage, dstImage, imgW);
+	for(int i = 0;i < cLoop;i++)
+	{
+		launchCudaProcessHalf0(grid, block, gainImage, srcImage, dstImage, imgW);
+	}
 	auto end  = std::chrono::system_clock::now();
 	auto dur = end - start;
 	int msec = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
@@ -69,10 +75,10 @@ launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY)
 int main()
 {
 
-	launchCudaProcess<float>(1920, 1080, 16, 16);
-	launchCudaProcess<short>(1920, 1080, 16, 16);
-	launchCudaProcess<float>(640,  480,  16, 16);
-	launchCudaProcess<short>(640,  480,  16, 16);
+	launchCudaProcess<float>(1920, 1080, 16, 16, 1000);
+	launchCudaProcess<short>(1920, 1080, 16, 16, 1000);
+	launchCudaProcess<float>(640,  480,  16, 16, 1000);
+	launchCudaProcess<short>(640,  480,  16, 16, 1000);
 
 	return 0;
 }

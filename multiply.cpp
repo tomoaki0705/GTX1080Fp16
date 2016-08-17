@@ -13,10 +13,10 @@ launchCudaProcessFloat0(dim3 grid, dim3 block,
 					float *gain, float *imageInput, float *imageOutput, int imgW);
 
 
-template<typename T> void launchCudaProcess(int imgW, int imgH, int gridX, int gridY, int cLoop);
+template<typename T> void launchCudaProcess(int imgW, int imgH, int gridX, int gridY, int cLoop, enum processType t = elementWise);
 
 template<> void
-launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY, int cLoop)
+launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY, int cLoop, enum processType t)
 {
 	float* srcImage, *gainImage, *dstImage;
 	int s = imgW*imgH;
@@ -27,6 +27,17 @@ launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY, int cLoop)
 
 	dim3 block(gridX, gridY, 1);
 	dim3 grid(imgW / block.x, imgH / block.y, 1);
+	switch(t)
+	{
+		case pack2:
+			grid = dim3((imgW / block.x) / 2, imgH / block.y, 1);
+			break;
+		case pack4:
+		case elementWise:
+		default:
+			grid = dim3(imgW / block.x, imgH / block.y, 1);
+			break;
+	}
 
 	auto start = std::chrono::system_clock::now();
 	for(int i = 0;i < cLoop;i++)
@@ -44,7 +55,7 @@ launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY, int cLoop)
 }
 
 template<> void
-launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY, int cLoop)
+launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY, int cLoop, enum processType t)
 {
 	short* srcImage, *gainImage, *dstImage;
 	int s = imgW*imgH;
@@ -55,6 +66,18 @@ launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY, int cLoop)
 
 	dim3 block(gridX, gridY, 1);
 	dim3 grid(imgW / block.x, imgH / block.y, 1);
+	switch(t)
+	{
+		case pack2:
+			grid = dim3((imgW / block.x) / 2, imgH / block.y, 1);
+			break;
+		case pack4:
+		case elementWise:
+		default:
+			grid = dim3(imgW / block.x, imgH / block.y, 1);
+			break;
+	}
+
 
 	auto start = std::chrono::system_clock::now();
 	for(int i = 0;i < cLoop;i++)

@@ -5,11 +5,11 @@
 #include <cuda_runtime.h>
 
 extern "C" void
-launchCudaProcessHalf0(dim3 grid, dim3 block, int sbytes,
+launchCudaProcessHalf0(dim3 grid, dim3 block,
 					short *gain, short *imageInput, short *imageOutput, int imgW);
 
 extern "C" void
-launchCudaProcessFloat0(dim3 grid, dim3 block, int sbytes,
+launchCudaProcessFloat0(dim3 grid, dim3 block,
 					float *gain, float *imageInput, float *imageOutput, int imgW);
 
 
@@ -29,7 +29,7 @@ launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY)
 	dim3 grid(imgW / block.x, imgH / block.y, 1);
 
 	auto start = std::chrono::system_clock::now();
-	launchCudaProcessFloat0(grid, block, 0, gainImage, srcImage, dstImage, imgW);
+	launchCudaProcessFloat0(grid, block, gainImage, srcImage, dstImage, imgW);
 	auto end  = std::chrono::system_clock::now();
 	auto dur = end - start;
 	int msec = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
@@ -54,7 +54,7 @@ launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY)
 	dim3 grid(imgW / block.x, imgH / block.y, 1);
 
 	auto start = std::chrono::system_clock::now();
-	launchCudaProcessHalf0(grid, block, 0, gainImage, srcImage, dstImage, imgW);
+	launchCudaProcessHalf0(grid, block, gainImage, srcImage, dstImage, imgW);
 	auto end  = std::chrono::system_clock::now();
 	auto dur = end - start;
 	int msec = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();

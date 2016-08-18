@@ -25,6 +25,7 @@ launchCudaProcessFloat1(dim3 grid, dim3 block,
 int getMedian(std::vector<int>& timeDuration)
 {
 	std::sort(timeDuration.begin(), timeDuration.end());
+//	std::cerr << timeDuration.size() << "\tmedian index:" << timeDuration.size()/2 << "\t" << timeDuration[0] << "[ms]\t" << timeDuration[timeDuration.size()-1] << "[ms]" << std::endl;
 	return timeDuration[timeDuration.size()/2];
 }
 
@@ -133,6 +134,9 @@ launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY, int cLoop, en
 int main()
 {
 
+	launchCudaProcess<float>(1920, 1080, 16, 16, 1);
+	launchCudaProcess<short>(1920, 1080, 16, 16, 1);
+	launchCudaProcess<short>(1920, 1080, 16, 16, 1, pack2);
 	launchCudaProcess<float>(1920, 1080, 16, 16, 1000);
 	launchCudaProcess<short>(1920, 1080, 16, 16, 1000);
 	launchCudaProcess<short>(1920, 1080, 16, 16, 1000, pack2);
@@ -142,6 +146,9 @@ int main()
 	launchCudaProcess<float>(3840, 2160, 16, 16, 1000);
 	launchCudaProcess<short>(3840, 2160, 16, 16, 1000);
 	launchCudaProcess<short>(3840, 2160, 16, 16, 1000, pack2);
+	launchCudaProcess<float>(8000, 8000, 16, 16, 1000);
+	launchCudaProcess<short>(8000, 8000, 16, 16, 1000);
+	launchCudaProcess<short>(8000, 8000, 16, 16, 1000, pack2);
 
 	return 0;
 }

@@ -6,7 +6,8 @@
 #include <vector>
 #include <algorithm>
 
-const std::string message = " [us] elapsed";
+const std::string messageTime = " [ns] elapsed\t";
+const std::string messagePixel = " pixels ";
 #define timeResolution std::chrono::nanoseconds
 typedef int duration;
 
@@ -29,7 +30,6 @@ launchCudaProcessFloat1(dim3 grid, dim3 block,
 duration getMedian(std::vector<duration>& timeDuration)
 {
 	std::sort(timeDuration.begin(), timeDuration.end());
-//	std::cerr << timeDuration.size() << "\tmedian index:" << timeDuration.size()/2 << "\t" << timeDuration[0] << "[ms]\t" << timeDuration[timeDuration.size()-1] << "[ms]" << std::endl;
 	return timeDuration[timeDuration.size()/2];
 }
 
@@ -69,7 +69,7 @@ launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY, int cLoop, en
 		duration usec = std::chrono::duration_cast<timeResolution>(dur).count();
 		timeDuration.push_back(usec);
 	}
-	std::cout << getMedian(timeDuration) << message << std::endl;
+	std::cout << getMedian(timeDuration) << messageTime << s << messagePixel << '(' << imgW << 'x' << imgH << ')' << std::endl;
 
 	cudaFree((void*)srcImage);
 	cudaFree((void*)gainImage);
@@ -127,7 +127,7 @@ launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY, int cLoop, en
 			}
 			break;
 	}
-	std::cout << getMedian(timeDuration) << message << std::endl;
+	std::cout << getMedian(timeDuration) << messageTime << s << messagePixel << '(' << imgW << 'x' << imgH << ')' << std::endl;
 
 	cudaFree((void*)srcImage);
 	cudaFree((void*)gainImage);

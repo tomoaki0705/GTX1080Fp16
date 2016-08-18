@@ -5,11 +5,15 @@
 #include <cuda_runtime.h>
 #include <vector>
 #include <algorithm>
+#include <cmath>
 
 const std::string messageTime = " [ns] elapsed\t";
 const std::string messagePixel = " pixels ";
 #define timeResolution std::chrono::nanoseconds
 typedef int duration;
+
+const uint64_t seed = 0x1234567;
+uint64_t state = seed;
 
 extern "C" void
 launchCudaProcessHalf0(dim3 grid, dim3 block,
@@ -31,6 +35,28 @@ duration getMedian(std::vector<duration>& timeDuration)
 {
 	std::sort(timeDuration.begin(), timeDuration.end());
 	return timeDuration[timeDuration.size()/2];
+}
+
+inline unsigned RNG()
+{
+	state = (uint64_t)(unsigned)state* 4164903690U + (unsigned)(state >> 32);
+	return (unsigned)state;
+}
+
+template<typename T> void fillRandomNumber(T* array, int cElement);
+
+template<> void fillRandomNumber<float>(float* array, int cElement)
+{
+	for(unsigned int i = 0;i < cElement;i++)
+	{
+		short random = (short)(RNG() & 0x3fff);
+		double exp = (double)(random - 0x2000) / (double)(0x1000);
+		std::cout << pow(2, exp) << std::endl;
+	}
+}
+
+template<> void fillRandomNumber<short>(short* array, int cElement)
+{
 }
 
 template<typename T> void launchCudaProcess(int imgW, int imgH, int gridX, int gridY, int cLoop, enum processType t = elementWise);
@@ -137,7 +163,6 @@ launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY, int cLoop, en
 
 int main()
 {
-
 	launchCudaProcess<float>(1920, 1080, 16, 16, 1);
 	launchCudaProcess<short>(1920, 1080, 16, 16, 1);
 	launchCudaProcess<short>(1920, 1080, 16, 16, 1, pack2);

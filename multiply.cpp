@@ -6,6 +6,10 @@
 #include <vector>
 #include <algorithm>
 
+const std::string message = " [us] elapsed";
+#define timeResolution std::chrono::nanoseconds
+typedef int duration;
+
 extern "C" void
 launchCudaProcessHalf0(dim3 grid, dim3 block,
 					short *gain, short *imageInput, short *imageOutput, int imgW);
@@ -22,7 +26,7 @@ extern "C" void
 launchCudaProcessFloat1(dim3 grid, dim3 block,
 					float *gain, float *imageInput, float *imageOutput, int imgW);
 
-int getMedian(std::vector<int>& timeDuration)
+duration getMedian(std::vector<duration>& timeDuration)
 {
 	std::sort(timeDuration.begin(), timeDuration.end());
 //	std::cerr << timeDuration.size() << "\tmedian index:" << timeDuration.size()/2 << "\t" << timeDuration[0] << "[ms]\t" << timeDuration[timeDuration.size()-1] << "[ms]" << std::endl;
@@ -55,17 +59,17 @@ launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY, int cLoop, en
 			break;
 	}
 
-	std::vector<int> timeDuration;
+	std::vector<duration> timeDuration;
 	for(int i = 0;i < cLoop;i++)
 	{
 		auto start = std::chrono::system_clock::now();
 		launchCudaProcessFloat0(grid, block, gainImage, srcImage, dstImage, imgW);
 		auto end  = std::chrono::system_clock::now();
 		auto dur = end - start;
-		int usec = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
+		duration usec = std::chrono::duration_cast<timeResolution>(dur).count();
 		timeDuration.push_back(usec);
 	}
-	std::cout << getMedian(timeDuration) << " [us] consumed" << std::endl;
+	std::cout << getMedian(timeDuration) << message << std::endl;
 
 	cudaFree((void*)srcImage);
 	cudaFree((void*)gainImage);
@@ -97,7 +101,7 @@ launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY, int cLoop, en
 	}
 
 
-	std::vector<int> timeDuration;
+	std::vector<duration> timeDuration;
 	switch(t)
 	{
 		case pack2:
@@ -107,7 +111,7 @@ launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY, int cLoop, en
 				launchCudaProcessHalf1(grid, block, gainImage, srcImage, dstImage, imgW);
 				auto end  = std::chrono::system_clock::now();
 				auto dur = end - start;
-				int usec = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
+				duration usec = std::chrono::duration_cast<timeResolution>(dur).count();
 				timeDuration.push_back(usec);
 			}
 			break;
@@ -118,12 +122,12 @@ launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY, int cLoop, en
 				launchCudaProcessHalf0(grid, block, gainImage, srcImage, dstImage, imgW);
 				auto end  = std::chrono::system_clock::now();
 				auto dur = end - start;
-				int usec = std::chrono::duration_cast<std::chrono::microseconds>(dur).count();
+				duration usec = std::chrono::duration_cast<timeResolution>(dur).count();
 				timeDuration.push_back(usec);
 			}
 			break;
 	}
-	std::cout << getMedian(timeDuration) << " [us] consumed" << std::endl;
+	std::cout << getMedian(timeDuration) << message << std::endl;
 
 	cudaFree((void*)srcImage);
 	cudaFree((void*)gainImage);

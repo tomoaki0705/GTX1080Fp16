@@ -10,9 +10,9 @@
 #include <iomanip>
 
 
-const std::string messageTime = " [ns] elapsed\t";
+const std::string messageTime = " [us] elapsed\t";
 const std::string messagePixel = " pixels ";
-#define timeResolution std::chrono::nanoseconds
+#define timeResolution std::chrono::microseconds
 typedef int duration;
 
 const uint64_t seed = 0x1234567;
@@ -34,10 +34,9 @@ extern "C" void
 launchCudaProcessFloat1(dim3 grid, dim3 block,
 					float *gain, float *imageInput, float *imageOutput, int imgW);
 
-duration getMedian(std::vector<duration>& timeDuration)
+duration extractDuration(std::vector<duration>& timeDuration)
 {
-	std::sort(timeDuration.begin(), timeDuration.end());
-	return timeDuration[timeDuration.size()/2];
+	return std::accumulate(timeDuration.begin(), timeDuration.end(), 0);
 }
 
 template<typename T> void launchCudaProcess0(dim3 grid, dim3 block,
@@ -164,7 +163,7 @@ template<typename T> void launchCudaProcess(int imgW, int imgH, int gridX, int g
 		timeDuration1.push_back(usec1);
 		timeDuration2.push_back(usec2);
 	}
-	std::cout << getMedian(timeDuration1) << " + " << getMedian(timeDuration2) << messageTime << s << messagePixel << '(' << imgW << 'x' << imgH << ')' << std::endl;
+	std::cout << extractDuration(timeDuration1) << " + " << extractDuration(timeDuration2) << messageTime << s << messagePixel << '(' << imgW << 'x' << imgH << ')' << std::endl;
 
 	cudaFree((void*)srcImage);
 	cudaFree((void*)gainImage);

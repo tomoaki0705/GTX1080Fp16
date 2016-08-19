@@ -178,18 +178,21 @@ int main()
 	launchCudaProcess<float>(1920, 1080, 16, 16, 1);
 	launchCudaProcess<short>(1920, 1080, 16, 16, 1);
 	launchCudaProcess<short>(1920, 1080, 16, 16, 1, pack2);
-	launchCudaProcess<float>(1920, 1080, 16, 16, 1000);
-	launchCudaProcess<short>(1920, 1080, 16, 16, 1000);
-	launchCudaProcess<short>(1920, 1080, 16, 16, 1000, pack2);
-	launchCudaProcess<float>(640,  480,  16, 16, 1000);
-	launchCudaProcess<short>(640,  480,  16, 16, 1000);
-	launchCudaProcess<short>(640,  480,  16, 16, 1000, pack2);
-	launchCudaProcess<float>(3840, 2160, 16, 16, 1000);
-	launchCudaProcess<short>(3840, 2160, 16, 16, 1000);
-	launchCudaProcess<short>(3840, 2160, 16, 16, 1000, pack2);
-	launchCudaProcess<float>(8000, 8000, 16, 16, 1000);
-	launchCudaProcess<short>(8000, 8000, 16, 16, 1000);
-	launchCudaProcess<short>(8000, 8000, 16, 16, 1000, pack2);
+	launchCudaProcess<float>(640,  480,  16, 16, 100);
+	launchCudaProcess<short>(640,  480,  16, 16, 100);
+	launchCudaProcess<short>(640,  480,  16, 16, 100, pack2);
+	launchCudaProcess<float>(1920, 1080, 16, 16, 100);
+	launchCudaProcess<short>(1920, 1080, 16, 16, 100);
+	launchCudaProcess<short>(1920, 1080, 16, 16, 100, pack2);
+	launchCudaProcess<float>(3840, 2160, 16, 16, 100);
+	launchCudaProcess<short>(3840, 2160, 16, 16, 100);
+	launchCudaProcess<short>(3840, 2160, 16, 16, 100, pack2);
+	launchCudaProcess<float>(4000, 4000, 16, 16, 100);
+	launchCudaProcess<short>(4000, 4000, 16, 16, 100);
+	launchCudaProcess<short>(4000, 4000, 16, 16, 100, pack2);
+	launchCudaProcess<float>(8000, 8000, 16, 16, 100);
+	launchCudaProcess<short>(8000, 8000, 16, 16, 100);
+	launchCudaProcess<short>(8000, 8000, 16, 16, 100, pack2);
 
 	return 0;
 }

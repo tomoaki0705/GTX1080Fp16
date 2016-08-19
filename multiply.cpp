@@ -40,6 +40,36 @@ duration getMedian(std::vector<duration>& timeDuration)
 	return timeDuration[timeDuration.size()/2];
 }
 
+template<typename T> void launchCudaProcess0(dim3 grid, dim3 block,
+					T *gain, T *imageInput, T *imageOutput, int imgW);
+
+template<typename T> void launchCudaProcess1(dim3 grid, dim3 block,
+					T *gain, T *imageInput, T *imageOutput, int imgW);
+
+template<> void launchCudaProcess0<float>(dim3 grid, dim3 block,
+					float *gain, float *imageInput, float *imageOutput, int imgW)
+{
+	launchCudaProcessFloat0(grid, block, gain, imageInput, imageOutput, imgW);
+}
+
+template<> void launchCudaProcess0<short>(dim3 grid, dim3 block,
+					short *gain, short *imageInput, short *imageOutput, int imgW)
+{
+	launchCudaProcessHalf0(grid, block, gain, imageInput, imageOutput, imgW);
+}
+
+template<> void launchCudaProcess1<float>(dim3 grid, dim3 block,
+					float *gain, float *imageInput, float *imageOutput, int imgW)
+{
+	//launchCudaProcessFloat1(grid, block, gain, imageInput, imageOutput, imgW);
+}
+
+template<> void launchCudaProcess1<short>(dim3 grid, dim3 block,
+					short *gain, short *imageInput, short *imageOutput, int imgW)
+{
+	launchCudaProcessHalf1(grid, block, gain, imageInput, imageOutput, imgW);
+}
+
 inline unsigned RNG()
 {
 	state = (uint64_t)(unsigned)state* 4164903690U + (unsigned)(state >> 32);
@@ -73,22 +103,19 @@ template<> void fillRandomNumber<short>(short* array, int cElement)
 	}
 }
 
-template<typename T> void launchCudaProcess(int imgW, int imgH, int gridX, int gridY, int cLoop, enum processType t = elementWise);
-
-template<> void
-launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY, int cLoop, enum processType t)
+template<typename T> void launchCudaProcess(int imgW, int imgH, int gridX, int gridY, int cLoop, enum processType t = elementWise)
 {
-	float* srcImage, *gainImage, *dstImage, *cpuSrc, *cpuGain;
+	T* srcImage, *gainImage, *dstImage, *cpuSrc, *cpuGain;
 	int s = imgW*imgH;
 
-	cudaMalloc((float**)&srcImage, (s*sizeof(float)));
-	cudaMalloc((float**)&gainImage, (s*sizeof(float)));
-	cudaMalloc((float**)&dstImage, (s*sizeof(float)));
-	cpuSrc = (float*)malloc(s*sizeof(float));
-	cpuGain = (float*)malloc(s*sizeof(float));
+	cudaMalloc((T**)&srcImage, (s*sizeof(T)));
+	cudaMalloc((T**)&gainImage, (s*sizeof(T)));
+	cudaMalloc((T**)&dstImage, (s*sizeof(T)));
+	cpuSrc = (T*)malloc(s*sizeof(T));
+	cpuGain = (T*)malloc(s*sizeof(T));
 
-	fillRandomNumber<float>(cpuSrc, s);
-	fillRandomNumber<float>(cpuGain, s);
+	fillRandomNumber<T>(cpuSrc, s);
+	fillRandomNumber<T>(cpuGain, s);
 
 	dim3 block(gridX, gridY, 1);
 	dim3 grid(imgW / block.x, imgH / block.y, 1);
@@ -103,25 +130,41 @@ launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY, int cLoop, en
 			grid = dim3(imgW / block.x, imgH / block.y, 1);
 			break;
 	}
+	launchCudaProcess0<T>(grid, block, gainImage, srcImage, dstImage, imgW);
 
 	std::vector<duration> timeDuration1;
 	std::vector<duration> timeDuration2;
 	for(int i = 0;i < cLoop;i++)
 	{
 		auto start = std::chrono::system_clock::now();
-		cudaMemcpy(srcImage, cpuSrc, s*sizeof(float), cudaMemcpyHostToDevice);
-		cudaMemcpy(gainImage, cpuGain, s*sizeof(float), cudaMemcpyHostToDevice);
+		cudaMemcpy(srcImage, cpuSrc, s*sizeof(T), cudaMemcpyHostToDevice);
+		cudaMemcpy(gainImage, cpuGain, s*sizeof(T), cudaMemcpyHostToDevice);
 		auto middle = std::chrono::system_clock::now();
-		launchCudaProcessFloat0(grid, block, gainImage, srcImage, dstImage, imgW);
-		auto end  = std::chrono::system_clock::now();
-		auto dur1 = middle - start;
-		auto dur2 = end - middle;
-		duration usec1 = std::chrono::duration_cast<timeResolution>(dur1).count();
-		duration usec2 = std::chrono::duration_cast<timeResolution>(dur2).count();
+		duration usec1 = std::chrono::duration_cast<timeResolution>(middle - start).count();
+		duration usec2 = 0;
+		switch(t)
+		{
+			case pack2:
+				{
+					auto mid1 = std::chrono::system_clock::now();
+					launchCudaProcess1<T>(grid, block, gainImage, srcImage, dstImage, imgW);
+					auto end  = std::chrono::system_clock::now();
+					usec2 = std::chrono::duration_cast<timeResolution>(end - mid1).count();
+				}
+				break;
+			default:
+				{
+					auto mid1 = std::chrono::system_clock::now();
+					launchCudaProcess0<T>(grid, block, gainImage, srcImage, dstImage, imgW);
+					auto end  = std::chrono::system_clock::now();
+					usec2 = std::chrono::duration_cast<timeResolution>(end - mid1).count();
+				}
+				break;
+		}
 		timeDuration1.push_back(usec1);
 		timeDuration2.push_back(usec2);
 	}
-	std::cout << getMedian(timeDuration2) << " + " << getMedian(timeDuration1) << messageTime << s << messagePixel << '(' << imgW << 'x' << imgH << ')' << std::endl;
+	std::cout << getMedian(timeDuration1) << " + " << getMedian(timeDuration2) << messageTime << s << messagePixel << '(' << imgW << 'x' << imgH << ')' << std::endl;
 
 	cudaFree((void*)srcImage);
 	cudaFree((void*)gainImage);
@@ -129,85 +172,6 @@ launchCudaProcess<float>(int imgW, int imgH, int gridX, int gridY, int cLoop, en
 	free((void*)cpuSrc);
 	free((void*)cpuGain);
 }
-
-template<> void
-launchCudaProcess<short>(int imgW, int imgH, int gridX, int gridY, int cLoop, enum processType t)
-{
-	short* srcImage, *gainImage, *dstImage, *cpuSrc, *cpuGain;
-	int s = imgW*imgH;
-
-	cudaMalloc((short**)&srcImage, (s*sizeof(short)));
-	cudaMalloc((short**)&gainImage, (s*sizeof(short)));
-	cudaMalloc((short**)&dstImage, (s*sizeof(short)));
-	cpuSrc = (short*)malloc(s*sizeof(short));
-	cpuGain = (short*)malloc(s*sizeof(short));
-
-	fillRandomNumber<short>(cpuSrc, s);
-	fillRandomNumber<short>(cpuGain, s);
-
-	dim3 block(gridX, gridY, 1);
-	dim3 grid(imgW / block.x, imgH / block.y, 1);
-	switch(t)
-	{
-		case pack2:
-			grid = dim3((imgW / block.x) / 2, imgH / block.y, 1);
-			break;
-		case pack4:
-		case elementWise:
-		default:
-			grid = dim3(imgW / block.x, imgH / block.y, 1);
-			break;
-	}
-
-
-	std::vector<duration> timeDuration1;
-	std::vector<duration> timeDuration2;
-	switch(t)
-	{
-		case pack2:
-			for(int i = 0;i < cLoop;i++)
-			{
-				auto start = std::chrono::system_clock::now();
-				cudaMemcpy(srcImage, cpuSrc, s*sizeof(short), cudaMemcpyHostToDevice);
-				cudaMemcpy(gainImage, cpuGain, s*sizeof(short), cudaMemcpyHostToDevice);
-				auto middle = std::chrono::system_clock::now();
-				launchCudaProcessHalf1(grid, block, gainImage, srcImage, dstImage, imgW);
-				auto end  = std::chrono::system_clock::now();
-				auto dur1 = middle - start;
-				auto dur2 = end - middle;
-				duration usec1 = std::chrono::duration_cast<timeResolution>(dur1).count();
-				duration usec2 = std::chrono::duration_cast<timeResolution>(dur2).count();
-				timeDuration1.push_back(usec1);
-				timeDuration2.push_back(usec2);
-			}
-			break;
-		default:
-			for(int i = 0;i < cLoop;i++)
-			{
-				auto start = std::chrono::system_clock::now();
-				cudaMemcpy(srcImage, cpuSrc, s*sizeof(short), cudaMemcpyHostToDevice);
-				cudaMemcpy(gainImage, cpuGain, s*sizeof(short), cudaMemcpyHostToDevice);
-				auto middle = std::chrono::system_clock::now();
-				launchCudaProcessHalf0(grid, block, gainImage, srcImage, dstImage, imgW);
-				auto end  = std::chrono::system_clock::now();
-				auto dur1 = middle - start;
-				auto dur2 = end - middle;
-				duration usec1 = std::chrono::duration_cast<timeResolution>(dur1).count();
-				duration usec2 = std::chrono::duration_cast<timeResolution>(dur2).count();
-				timeDuration1.push_back(usec1);
-				timeDuration2.push_back(usec2);
-			}
-			break;
-	}
-	std::cout << getMedian(timeDuration2) << " + " << getMedian(timeDuration1) << messageTime << s << messagePixel << '(' << imgW << 'x' << imgH << ')' << std::endl;
-
-	cudaFree((void*)srcImage);
-	cudaFree((void*)gainImage);
-	cudaFree((void*)dstImage);
-	free((void*)cpuSrc);
-	free((void*)cpuGain);
-}
-
 
 int main()
 {

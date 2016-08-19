@@ -20,4 +20,5 @@ else(CUDA_FOUND)
 endif(CUDA_FOUND)
 
 set(CMAKE_CXX_STANDARD 11)
-cuda_add_executable(fp16Mul multiply.cpp ${CUDA_SOURCES})
+cuda_add_executable(fp16Mul multiply.cpp random.cpp ${CUDA_SOURCES})
+add_executable(convertFp16 convert.cpp random.cpp)

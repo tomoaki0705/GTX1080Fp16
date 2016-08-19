@@ -4,17 +4,13 @@
 #include "types.h"
 #include <cuda_runtime.h>
 #include <vector>
-#include <algorithm>
 #include <cmath>
 #include <immintrin.h>
 #include <iomanip>
 #include "random.h"
+#include "timeMeasure.h"
 
-
-const std::string messageTime = " [us] elapsed\t";
 const std::string messagePixel = " pixels ";
-#define timeResolution std::chrono::microseconds
-typedef int duration;
 
 extern "C" void
 launchCudaProcessHalf0(dim3 grid, dim3 block,
@@ -31,11 +27,6 @@ launchCudaProcessHalf1(dim3 grid, dim3 block,
 extern "C" void
 launchCudaProcessFloat1(dim3 grid, dim3 block,
 					float *gain, float *imageInput, float *imageOutput, int imgW);
-
-duration extractDuration(std::vector<duration>& timeDuration)
-{
-	return std::accumulate(timeDuration.begin(), timeDuration.end(), 0);
-}
 
 template<typename T> void launchCudaProcess0(dim3 grid, dim3 block,
 					T *gain, T *imageInput, T *imageOutput, int imgW);

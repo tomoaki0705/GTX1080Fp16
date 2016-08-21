@@ -14,22 +14,7 @@ cudaProcessHalf0(half *dst, half *gain, half *src, int imgW)
 	half g = gain[px];
 	half i = src[px];
 
-	i = __hmul(g, i); // 1
-	i = __hmul(g, i); // 2
-	i = __hmul(g, i); // 3
-	i = __hmul(g, i); // 4
-	i = __hmul(g, i); // 5
-	i = __hmul(g, i); // 6
-	i = __hmul(g, i); // 7
-	i = __hmul(g, i); // 8
-	i = __hmul(g, i); // 9
-	i = __hmul(g, i); // 10
-	i = __hmul(g, i); // 11
-	i = __hmul(g, i); // 12
-	i = __hmul(g, i); // 13
-	i = __hmul(g, i); // 14
-	i = __hmul(g, i); // 15
-	dst[px] = __hmul(g, i); // 16
+	dst[px] = __hmul(g, i);
 }
 
 __global__ void
@@ -46,22 +31,7 @@ cudaProcessFloat0(float *dst, float *gain, float *src, int imgW)
 	float g = gain[px];
 	float i = src[px];
 
-	i = g*i; // 1
-	i = g*i; // 2
-	i = g*i; // 3
-	i = g*i; // 4
-	i = g*i; // 5
-	i = g*i; // 6
-	i = g*i; // 7
-	i = g*i; // 8
-	i = g*i; // 9
-	i = g*i; // 10
-	i = g*i; // 11
-	i = g*i; // 12
-	i = g*i; // 13
-	i = g*i; // 14
-	i = g*i; // 15
-	dst[px] = g*i; // 16
+	dst[px] = g*i;
 }
 
 __global__ void
@@ -78,22 +48,7 @@ cudaProcessHalf1(half2 *dst, half2 *gain, half2 *src, int imgW)
 	half2 g = gain[px];
 	half2 i = src[px];
 
-	i = __hmul2(g, i); // 1
-	i = __hmul2(g, i); // 2
-	i = __hmul2(g, i); // 3
-	i = __hmul2(g, i); // 4
-	i = __hmul2(g, i); // 5
-	i = __hmul2(g, i); // 6
-	i = __hmul2(g, i); // 7
-	i = __hmul2(g, i); // 8
-	i = __hmul2(g, i); // 9
-	i = __hmul2(g, i); // 10
-	i = __hmul2(g, i); // 11
-	i = __hmul2(g, i); // 12
-	i = __hmul2(g, i); // 13
-	i = __hmul2(g, i); // 14
-	i = __hmul2(g, i); // 15
-	dst[px] = __hmul2(g, i); // 16
+	dst[px] = __hmul2(g, i);
 }
 
 extern "C" void

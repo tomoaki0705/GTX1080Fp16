@@ -85,40 +85,45 @@ template<typename T> void launchCudaProcess(int imgW, int imgH, int gridX, int g
 			grid = dim3(imgW / block.x, imgH / block.y, 1);
 			break;
 	}
-	launchCudaProcess0<T>(grid, block, gainImage, srcImage, dstImage, imgW);
 
 	std::vector<duration> timeDuration1;
 	std::vector<duration> timeDuration2;
+	auto startCopy = std::chrono::system_clock::now();
 	for(int i = 0;i < cLoop;i++)
 	{
-		auto start = std::chrono::system_clock::now();
 		cudaMemcpy(srcImage, cpuSrc, s*sizeof(T), cudaMemcpyHostToDevice);
 		cudaMemcpy(gainImage, cpuGain, s*sizeof(T), cudaMemcpyHostToDevice);
-		auto middle = std::chrono::system_clock::now();
-		duration usec1 = std::chrono::duration_cast<timeResolution>(middle - start).count();
-		duration usec2 = 0;
-		switch(t)
-		{
-			case pack2:
-				{
-					auto mid1 = std::chrono::system_clock::now();
-					launchCudaProcess1<T>(grid, block, gainImage, srcImage, dstImage, imgW);
-					auto end  = std::chrono::system_clock::now();
-					usec2 = std::chrono::duration_cast<timeResolution>(end - mid1).count();
-				}
-				break;
-			default:
-				{
-					auto mid1 = std::chrono::system_clock::now();
-					launchCudaProcess0<T>(grid, block, gainImage, srcImage, dstImage, imgW);
-					auto end  = std::chrono::system_clock::now();
-					usec2 = std::chrono::duration_cast<timeResolution>(end - mid1).count();
-				}
-				break;
-		}
-		timeDuration1.push_back(usec1);
-		timeDuration2.push_back(usec2);
 	}
+	auto endCopy = std::chrono::system_clock::now();
+	duration usec1 = std::chrono::duration_cast<timeResolution>(endCopy - startCopy).count();
+	duration usec2 = 0;
+	switch(t)
+	{
+		case pack2:
+			{
+				auto start = std::chrono::system_clock::now();
+				for(int i = 0;i < cLoop;i++)
+				{
+					launchCudaProcess1<T>(grid, block, gainImage, srcImage, dstImage, imgW);
+				}
+				auto end = std::chrono::system_clock::now();
+				usec2 = std::chrono::duration_cast<timeResolution>(end - start).count();
+			}
+			break;
+		default:
+			{
+				auto start = std::chrono::system_clock::now();
+				for(int i = 0;i < cLoop;i++)
+				{
+					launchCudaProcess0<T>(grid, block, gainImage, srcImage, dstImage, imgW);
+				}
+				auto end  = std::chrono::system_clock::now();
+				usec2 = std::chrono::duration_cast<timeResolution>(end - start).count();
+			}
+			break;
+	}
+	timeDuration1.push_back(usec1);
+	timeDuration2.push_back(usec2);
 	std::cout << extractDuration(timeDuration1) << " + " << extractDuration(timeDuration2) << messageTime << s << messagePixel << '(' << imgW << 'x' << imgH << ')' << std::endl;
 
 	cudaFree((void*)srcImage);
@@ -130,12 +135,18 @@ template<typename T> void launchCudaProcess(int imgW, int imgH, int gridX, int g
 
 int main()
 {
-	launchCudaProcess<float>(1920, 1080, 16, 16, 1);
-	launchCudaProcess<short>(1920, 1080, 16, 16, 1);
-	launchCudaProcess<short>(1920, 1080, 16, 16, 1, pack2);
 	launchCudaProcess<float>(640,  480,  16, 16, 100);
 	launchCudaProcess<short>(640,  480,  16, 16, 100);
 	launchCudaProcess<short>(640,  480,  16, 16, 100, pack2);
+	launchCudaProcess<float>(800,  600,  16, 16, 100);
+	launchCudaProcess<short>(800,  600,  16, 16, 100);
+	launchCudaProcess<short>(800,  600,  16, 16, 100, pack2);
+	launchCudaProcess<float>(1024, 768, 16, 16, 100);
+	launchCudaProcess<short>(1024, 768, 16, 16, 100);
+	launchCudaProcess<short>(1024, 768, 16, 16, 100, pack2);
+	launchCudaProcess<float>(1280, 1024, 16, 16, 100);
+	launchCudaProcess<short>(1280, 1024, 16, 16, 100);
+	launchCudaProcess<short>(1280, 1024, 16, 16, 100, pack2);
 	launchCudaProcess<float>(1920, 1080, 16, 16, 100);
 	launchCudaProcess<short>(1920, 1080, 16, 16, 100);
 	launchCudaProcess<short>(1920, 1080, 16, 16, 100, pack2);
